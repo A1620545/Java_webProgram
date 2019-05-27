@@ -1,0 +1,335 @@
+//////本次跟新，实现了两个操作界面，但是存在两个操作平台还无法独立操作，指令可能有冲突的问题。///////////
+
+package game;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import java.util.List;
+public class snakeWin extends JPanel implements ActionListener,KeyListener,Runnable{
+	int fenShu=0,Speed=0;int fenShu2=0,Speed2=0;
+	boolean start = false;
+	int rx=0,ry=0;
+	int eat1=0,eat2=0;
+	JDialog dialog = new JDialog();
+	JLabel label = new JLabel("PLAYER1失败！PLAYER2胜，分数是"+fenShu2+"。");
+	JButton ok = new JButton("T_T");
+	Random r = new Random();
+	JButton newGame,stopGame;
+	List<snakeAct> list = new ArrayList<snakeAct>();//list长度10
+	int temp=0;
+	Thread nThread;
+	///////////////////
+	
+	boolean start2 = false;
+	int rx2=0,ry2=0;
+	int eat21=0,eat22=0;
+	JDialog dialog2 = new JDialog();
+	JLabel label2 = new JLabel("PLAYER2失败！PALYER1胜，分数是"+fenShu+"。");
+	JButton ok2 = new JButton("T_T");
+	Random r2 = new Random();
+	JButton newGame2,stopGame2;
+	List<snakeAct> list2 = new ArrayList<snakeAct>();//list2长度10
+	int temp2=0;
+	Thread nThread2;
+	
+	public snakeWin() {
+		newGame = new JButton("开始");
+		stopGame = new JButton("结束");
+		newGame.addActionListener(this);
+		stopGame.addActionListener(this);
+		this.addKeyListener(this);
+		this.setLayout(new FlowLayout(FlowLayout.LEFT));//流布局取出最新
+		this.add(newGame);
+		this.add(stopGame);
+		dialog.setLayout(new GridLayout(2, 1));//网格布局?
+		dialog.add(label);
+		dialog.add(ok);
+		dialog.setSize(200, 200);//对话框大小
+		dialog.setLocation(200, 200);
+		dialog.setVisible(false);
+		ok.addActionListener(this);
+		/////////////////////
+		this.addKeyListener(this);
+		this.setLayout(new FlowLayout(FlowLayout.LEFT));//流布局？
+		this.add(newGame);
+		this.add(stopGame);
+		dialog2.setLayout(new GridLayout(2, 1));//网格布局?
+		dialog2.add(label2);
+		dialog2.add(ok2);
+		dialog2.setSize(200, 200);//对话框大小
+		dialog2.setLocation(200, 200);
+		dialog2.setVisible(false);
+		ok2.addActionListener(this);
+	}
+	
+	public void paintComponent(Graphics g){
+		super.paintComponent(g);
+		g.drawRect(10, 40, 400, 300);
+		g.drawString("分数："+fenShu, 150, 15);
+		g.drawString("速度："+Speed, 150, 35);
+		g.setColor(new Color(0, 255, 0));//颜色
+		if(start){
+			g.fillRect(10+rx*10, 40+ry*10, 10, 10);//食物位置显示
+			for (int i = 0; i < list.size(); i++) {
+				g.setColor(new Color(0, 255, 255));
+				g.fillRect(10+list.get(i).getX()*10, 40+list.get(i).getY()*10, 10, 10);//初始化蛇位置
+			}
+		}
+		g.drawRect(450, 40, 400, 300);
+		g.drawString("分数："+fenShu2, 550, 15);
+		g.drawString("速度："+Speed2, 550, 35);
+		g.setColor(new Color(255, 255, 0));//颜色
+		if(start){
+			g.fillRect(450+rx2*10, 40+ry2*10, 10, 10);//食物位置显示
+			for (int i = 0; i < list2.size(); i++) {
+				g.setColor(new Color(0, 0, 255));
+				g.fillRect(450+list2.get(i).getM()*10, 40+list2.get(i).getN()*10, 10, 10);//初始化蛇位置
+			}
+		}
+	}
+	public void actionPerformed(ActionEvent e) {
+		if(e.getSource()==newGame){
+			newGame.setEnabled(false);
+			start = true;
+			rx=r.nextInt(40);ry=r.nextInt(30);//？（初始化食物位置）
+			snakeAct tempAct = new snakeAct();
+			tempAct.setX(20);
+			tempAct.setY(15);
+			list.add(tempAct);
+			this.requestFocus();//获取焦点
+			nThread = new Thread(this);//新线程
+			nThread.start();
+			repaint();
+		}
+		if(e.getSource()==stopGame){//点击结束则离开
+			System.exit(0);
+		}
+		if(e.getSource()==ok){//玩家死亡后
+			list.clear();//队长清空
+			start=false;
+			newGame.setEnabled(true);
+			dialog.setVisible(false);
+			fenShu=0;
+			Speed=0;
+			repaint();
+		}
+		//////////
+		if(e.getSource()==newGame){
+			newGame.setEnabled(false);
+			start = true;
+			rx2=r2.nextInt(40);ry2=r2.nextInt(30);//？（初始化食物位置）
+			snakeAct tempAct2 = new snakeAct();
+			tempAct2.setM(20);
+			tempAct2.setN(15);
+			list2.add(tempAct2);
+			this.requestFocus();//获取焦点
+			nThread2 = new Thread(this);//新线程
+			nThread2.start();
+			repaint();
+		}
+		if(e.getSource()==stopGame){//点击结束则离开
+			System.exit(0);
+		}
+		if(e.getSource()==ok2){//玩家死亡后
+			list2.clear();//队长清空
+			start2=false;
+			newGame.setEnabled(true);
+			dialog2.setVisible(false);
+			fenShu2=0;
+			Speed2=0;
+			repaint();
+		}
+	}
+	private void eat() {
+		if (rx==list.get(0).getX()&&ry==list.get(0).getY()) {//食物位置和蛇位置重合
+			rx = r.nextInt(40);ry = r.nextInt(30);//新生成食物坐标
+			snakeAct tempAct = new snakeAct();
+			tempAct.setX(list.get(list.size()-1).getX());
+			tempAct.setY(list.get(list.size()-1).getY());
+			list.add(tempAct);
+			fenShu = fenShu+100*Speed+10;
+			eat1++;//？
+			if(eat1-eat2>=4){
+				eat2=eat1;
+				Speed++;
+			}
+		}
+		///////
+		if (rx2==list2.get(0).getX()&&ry2==list2.get(0).getY()) {//食物位置和蛇位置重合
+			rx2 = r2.nextInt(40);ry2 = r2.nextInt(30);//新生成食物坐标
+			snakeAct tempAct2 = new snakeAct();
+			tempAct2.setM(list2.get(list2.size()-1).getM());
+			tempAct2.setN(list2.get(list2.size()-1).getN());
+			list2.add(tempAct2);
+			fenShu2 = fenShu2+100*Speed2+10;
+			eat21++;//？
+			if(eat21-eat22>=4){
+				eat22=eat21;
+				Speed2++;
+			}
+		}
+	}
+	public void otherMove(){//？
+		snakeAct tempAct = new snakeAct();
+		for (int i = 0; i < list.size(); i++) {
+			if (i==1) {
+				list.get(i).setX(list.get(0).getX());
+				list.get(i).setY(list.get(0).getY());
+			}else if(i>1){
+				tempAct=list.get(i-1);
+				list.set(i-1, list.get(i));
+				list.set(i, tempAct);
+			}
+			
+		}
+		//////////
+		snakeAct tempAct2 = new snakeAct();
+		for (int i = 0; i < list2.size(); i++) {
+			if (i==1) {
+				list2.get(i).setM(list2.get(0).getM());
+				list2.get(i).setN(list2.get(0).getN());
+			}else if(i>1){
+				tempAct2=list2.get(i-1);
+				list2.set(i-1, list2.get(i));
+				list2.set(i, tempAct2);
+			}
+			
+		}
+	}
+	public void move(int x,int y,int m,int n){
+		if (minYes1(x, y)) {
+			otherMove();
+			list.get(0).setX(list.get(0).getX()+x);
+			list.get(0).setY(list.get(0).getY()+y);
+			eat();
+			repaint();
+		}else {
+			nThread = null;
+			label.setText("PLAYER1失败！PLAYER2胜，分数是"+fenShu2+"。"
+					+ "");
+			dialog.setVisible(true);}
+   
+			if (minYes2(m, n)) {
+				otherMove();
+				list2.get(0).setM(list.get(0).getX()+m);
+				list2.get(0).setN(list.get(0).getY()+n);
+				eat();
+				repaint();
+			}else {
+				nThread = null;
+				label.setText("PLAYER2失败！PALYER1胜，分数是"+fenShu+"。"
+						+ "");
+				dialog.setVisible(true);
+			}
+		}
+		
+	
+	public boolean minYes1(int x,int y){//
+		if (!maxYes(list.get(0).getX()+x,list.get(0).getY()+ y)) {
+			return false;
+		}
+		return true;
+	}
+	public boolean minYes2(int m,int n){//？
+		if (!maxYes(list2.get(0).getM()+m,list2.get(0).getN()+ n)) {
+			return false;
+		}
+		return true;
+	}
+	public boolean maxYes(int x,int y){//判断触及底线
+		if (x<0||x>=40||y<0||y>=30) {
+			return false;
+		}
+		for (int i = 0; i < list.size(); i++) {//？
+		if (i>1&&list.get(0).getX()==list.get(i).getX()&&list.get(0).getY()==list.get(i).getY()) {
+				return false;
+			}
+		}
+		return true;
+	}
+	public void keyPressed(KeyEvent e) {
+		if(start){
+			switch (e.getKeyCode()) {
+			case KeyEvent.VK_W:
+				move(0, -1,0,0);
+				temp=1;
+				break;
+			case KeyEvent.VK_S:
+				move(0, 1,0,0);
+				temp=2;
+				break;
+			case KeyEvent.VK_A:
+				move(-1, 0,0,0);
+				temp=3;
+				break;
+			case KeyEvent.VK_D:
+				move(1, 0,0,0);
+				temp=4;
+				break;
+
+			case KeyEvent.VK_UP:
+				move(0,0,0, -1);
+				temp=5;
+				break;
+			case KeyEvent.VK_DOWN:
+				move(0,0,0, 1);
+				temp=6;
+				break;
+			case KeyEvent.VK_LEFT:
+				move(0,0,-1, 0);
+				temp=7;
+				break;
+			case KeyEvent.VK_RIGHT:
+				move(0,0,1, 0);
+				temp=8;
+				break;
+			default:
+				break;}
+			}
+		}
+	
+	public void keyReleased(KeyEvent e) {}
+	public void keyTyped(KeyEvent e) {}
+	public void run() {
+		while (start) {
+			switch (temp) {
+			case 1:
+				move(0, -1,0,0);
+				break;
+			case 2:
+				move(0, 1,0,0);
+				break;
+			case 3:
+				move(-1, 0,0,0);
+				break;
+			case 4:
+				move(1, 0,0,0);
+				break;
+			case 5:
+				move(0, -1,0,0);
+				break;
+			case 6:
+				move(0,0,0, 1);
+				break;
+			case 7:
+				move(0,0,-1, 0);
+				break;
+			case 8:
+				move(0,0,1, 0);
+				break;
+			default:
+				break;
+			}
+			repaint();
+			try {
+				Thread.sleep(300-30*Speed);
+			} catch (InterruptedException e) {
+				// TODO 自动生成的 catch 块
+				e.printStackTrace();
+			}
+		}
+		
+	}
+
+}
